@@ -6,25 +6,33 @@ enum class Relation {
 }
 
 /**
- * Syntax sugar for creating an [IntransitiveRuleSet] from an enum.
+ * Defines a complete, consistent set of rules between element pairs.
  *
- * This will validate the rules for completeness (all enum values are mentioned) and consistency.
+ * For example, if you have elements a, b, c you could define these relations:
  *
- * @param [relations] All [Relation.LEFT_TO_RIGHT] relations for all enum values.
+ * ```
+ * a > b
+ * b > c
+ * c > a
+ * ```
  *
- * @throws [RuleSetValidationError] if the rule set is invalid.
- */
-inline fun <reified T : Enum<T>> intransitiveRuleSet(vararg relations: Pair<T, T>) =
-    IntransitiveRuleSet(enumValues<T>().toSet(), relations.toSet())
-
-/**
- * Defines a complete set of rules based on an anti-reflexive, asymmetric, intransitive relation.
+ * The corresponding code would be:
  *
- * For example, if you have two elements a and b: a > b, b > c, c > a).
+ * ```kotlin
+ * val rules = IntransitiveRuleSet(
+ *     setOf(a, b, c),
+ *     setOf(a to b, b to c, c to a)
+ * )
+ * rules.getRelation(a,  b)  // => Relation.LEFT_TO_RIGHT
+ * rules.getRelation(b,  a)  // => Relation.RIGHT_TO_LEFT
+ * rules.getRelation(a,  a)  // => Relation.EQUAL
+ * ```
  *
  * The provided pairs must be complete and map all possible [Relation.LEFT_TO_RIGHT] relations.
  * The inverse pairs automatically become [Relation.RIGHT_TO_LEFT] relations.
  * Equal values become [Relation.EQUAL] relations.
+ *
+ * To be more precise, the rules are based on a binary, anti-reflexive, asymmetric, intransitive relation.
  *
  * @param [values] The set of values for which we want to define relations.
  * @param [relations] All [Relation.LEFT_TO_RIGHT] relations for the given values.
@@ -44,6 +52,33 @@ class IntransitiveRuleSet<T>(values: Set<T>, private val relations: Set<Pair<T, 
             else -> Relation.RIGHT_TO_LEFT
         }
 }
+
+/**
+ * Syntax sugar for creating an [IntransitiveRuleSet] from an enum.
+ *
+ * The set of values is automatically inferred from the enum.
+ * You only need to provide the actual rules between value pairs.
+ *
+ * Example:
+ *
+ * ```kotlin
+ * enum V { a, b, c }
+ *
+ * val rules = intransitiveRuleSet(
+ *     V.a to V.b,
+ *     V.b to V.c,
+ *     V.c to V.a
+ * )
+ * ```
+ *
+ * This will validate the rules for completeness (all enum values are mentioned) and consistency.
+ *
+ * @param [relations] All [Relation.LEFT_TO_RIGHT] relations for all enum values.
+ *
+ * @throws [RuleSetValidationError] if the rule set is invalid.
+ */
+inline fun <reified T : Enum<T>> intransitiveRuleSet(vararg relations: Pair<T, T>) =
+    IntransitiveRuleSet(enumValues<T>().toSet(), relations.toSet())
 
 // --------------------------------------------------------------------------------------------------------------------
 // Validation
