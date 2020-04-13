@@ -22,8 +22,7 @@ class IntransitiveRuleSetTest {
     }
 
     @Test
-    fun incompleteRuleSet() {
-        // Removing any rule results in incompleteness
+    fun validateRulesComplete() {
         for (rule in completeRuleSet) {
             val subset = completeRuleSet.toMutableList().apply { remove(rule) }
             assertThrows<RuleSetValidationError> {
@@ -33,8 +32,7 @@ class IntransitiveRuleSetTest {
     }
 
     @Test
-    fun inverseRule() {
-        // Adding any inverse rule results in incorrectness
+    fun validateRulesAntiSymmetric() {
         for (rule in completeRuleSet) {
             assertThrows<RuleSetValidationError> {
                 intransitiveRuleSet(
@@ -46,8 +44,7 @@ class IntransitiveRuleSetTest {
     }
 
     @Test
-    fun symmetricRule() {
-        // Adding any symmetric rule results in incorrectness
+    fun validateRulesIrreflexive() {
         for (item in RuleItem.values()) {
             assertThrows<RuleSetValidationError> {
                 intransitiveRuleSet(
