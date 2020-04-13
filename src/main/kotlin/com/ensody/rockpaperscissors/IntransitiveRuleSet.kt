@@ -16,6 +16,10 @@ enum class Relation {
  * c > a
  * ```
  *
+ * Note that this relation is intransitive because it allows `c > a`.
+ * In contrast, the greater-than relation on numbers is transitive,
+ * which means `a > b` and `b > c` implies `a > c` (the inverse of our rule).
+ *
  * The corresponding code would be:
  *
  * ```kotlin
@@ -32,7 +36,7 @@ enum class Relation {
  * The inverse pairs automatically become [Relation.RIGHT_TO_LEFT] relations.
  * Equal values become [Relation.EQUAL] relations.
  *
- * To be more precise, the rules are based on a binary, anti-reflexive, asymmetric, intransitive relation.
+ * To be more precise, the rules are based on an asymmetric, intransitive relation.
  *
  * @param [values] The set of values for which we want to define relations.
  * @param [relations] All [Relation.LEFT_TO_RIGHT] relations for the given values.
@@ -90,6 +94,9 @@ class RuleSetValidationError(description: String) : IllegalArgumentException(des
 /**
  * Validates an intransitive rule set for completeness and consistency.
  *
+ * Completeness means that all distinct element pairs have a corresponding relation.
+ * Consistency means that the relation is asymmetric (anti-symmetric and irreflexive).
+ *
  * @param [values] The set of values for which we want to define relations.
  * @param [relations] All [Relation.LEFT_TO_RIGHT] relations for the given values.
  *
@@ -99,13 +106,16 @@ fun <T> validateIntransitiveRuleSet(values: Set<T>, relations: Set<Pair<T, T>>) 
     val valuesList = values.toMutableList()
     while (valuesList.isNotEmpty()) {
         val left = valuesList.removeAt(0)
+        // Ensure relation is irreflexive
         if (left to left in relations) {
             throw RuleSetValidationError("Relation between equal elements: ${left to left}")
         }
         for (right in valuesList) {
+            // Ensure relation is anti-symmetric
             if (left to right in relations && right to left in relations) {
                 throw RuleSetValidationError("Conflicting relations: ${left to right} and ${right to left}")
             }
+            // Ensure completeness
             if (left to right !in relations && right to left !in relations) {
                 throw RuleSetValidationError("Missing relation between $left and $right")
             }
